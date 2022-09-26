@@ -1,0 +1,19 @@
+version: "3"
+
+networks:
+  twitter-agg:
+    external: false
+
+services:
+  twitteragg:
+    image: pandects/twitter-agg
+    container_name: twitter-agg
+    build: .
+    #environment:
+        #restart: always
+    networks:
+      - twitter-agg
+    volumes:
+      - ./twitter-agg:/usr/app
+    ports:
+      - "5000:5000"
