@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {% for tweet in tweets %}
+    <p>{{ tweet['author_id'] }} has posted a tweet of id {{ tweet['id'] }}: {{ tweet['text'] }}</p>
+    {% endfor %}
+{% endblock  %}
