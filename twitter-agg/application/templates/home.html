@@ -2,6 +2,9 @@
 
 {% block content %}
     {% for tweet in tweets %}
-    <p>{{ tweet['author_id'] }} has posted a tweet of id {{ tweet['id'] }}: {{ tweet['text'] }}</p>
+    <img src="{{ tweet['profile_image'] }}" height="20" width="20">
+    <p>{{ tweet['name'] }}</p>
+    <p>@{{ tweet['handle'] }}</p>
+    <p>{{ tweet['text'] }}</p>
     {% endfor %}
 {% endblock  %}

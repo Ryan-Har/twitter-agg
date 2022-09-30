@@ -14,10 +14,19 @@ def main():
     for i in users:
         users_by_ID[i.user_ID] = i
 
+    #get 10 tweets for the users
     tweets = TwitterOperations.get_tweets([user.user_handle for user in users])
-    
 
-    return render_template('home.html', tweets=tweets['data'])
+    #combine tweet and user data
+    tweets_with_user = []
+    for tweet in tweets['data']:
+        tweet_dict = {}
+        tweet_dict['handle'] = users_by_ID[tweet['author_id']].user_handle
+        tweet_dict['name'] = users_by_ID[tweet['author_id']].friendly_name
+        tweet_dict['profile_image'] = users_by_ID[tweet['author_id']].profile_picture
+        tweet_dict['text'] = tweet['text']
+        tweets_with_user.append(tweet_dict)
+    return render_template('home.html', tweets=tweets_with_user)
     
 
 @app.route('/api/')

@@ -60,10 +60,10 @@ class DataOperations():
                     f.truncate()
 
 class TwitterOperations():
-    
-    def get_users_info():
+    #get user ID, handle, name and profile image
+    def get_users_info(): 
         url = f"https://api.twitter.com/2/users/by?usernames={','.join(DataOperations.get_users())}&user.fields=profile_image_url"
-
+        
         payload={}
         headers = {
             'Authorization': f"Bearer {app.config['BEARER']}",
@@ -71,20 +71,48 @@ class TwitterOperations():
         response = requests.request("GET", url, headers=headers, data=payload).json()
         return response['data']
 
+        #get tweets for specific user
     def get_tweets(users_to_get_tweets, **kwargs):
-        formatted_users = " OR ".join([f"from:{user}" for user in users_to_get_tweets])
+        formatted_users = " OR ".join([f"from:{user}" for user in users_to_get_tweets]) # format for the api
         
-        if 'next_token' in kwargs:
-            url = f"https://api.twitter.com/2/tweets/search/recent?query=({formatted_users})&next_token={kwargs.get('next_token')}&tweet.fields=author_id"
+        if 'next_token' in kwargs: #next token to retrieve older tweets if there are any
+            url = f"https://api.twitter.com/2/tweets/search/recent?query=({formatted_users})&next_token={kwargs.get('next_token')}&tweet.fields=author_id,referenced_tweets"
         else:
-            url = f"https://api.twitter.com/2/tweets/search/recent?query=({formatted_users})&tweet.fields=author_id"
+            url = f"https://api.twitter.com/2/tweets/search/recent?query=({formatted_users})&tweet.fields=author_id,referenced_tweets"
+        payload={}
+        headers = {
+            'Authorization': f"Bearer {app.config['BEARER']}",
+            }
+        response = requests.request("GET", url, headers=headers, data=payload).json()
+        #Retweets are truncated, this function resolves that - To add the expansion of short URL's for display
+        fixed_data = TwitterOperations.fix_truncated_data(response)
+
+        return fixed_data
+
+    def fix_truncated_data(data):
+        for x in data['data']:
+            # un truncate retweets which truncate within the API
+            if x['text'].startswith('RT'):
+                try:
+                    full_text = TwitterOperations.get_single_tweet_text((x['referenced_tweets'][0]['id']))
+                    x['text'] = f"RT: {full_text}"
+                except:
+                    print("text started with 'RT' but wasn't a retweet") 
+            else:
+                pass
+
+        return data
+
+    #returns only the text for a single tweet, by ID
+    def get_single_tweet_text(id):
+        url = f"https://api.twitter.com/2/tweets/{id}"
         payload={}
         headers = {
             'Authorization': f"Bearer {app.config['BEARER']}",
             }
         response = requests.request("GET", url, headers=headers, data=payload).json()
 
-        return response
+        return response['data']['text']
 
 class TwitterUser(object):
 
