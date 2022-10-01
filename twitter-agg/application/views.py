@@ -25,6 +25,7 @@ def main():
         tweet_dict['name'] = users_by_ID[tweet['author_id']].friendly_name
         tweet_dict['profile_image'] = users_by_ID[tweet['author_id']].profile_picture
         tweet_dict['text'] = tweet['text']
+        tweet_dict['created_at'] = tweet['created_at']
         tweets_with_user.append(tweet_dict)
     return render_template('home.html', tweets=tweets_with_user)
     

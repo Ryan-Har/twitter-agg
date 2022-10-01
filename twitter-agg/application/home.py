@@ -76,20 +76,20 @@ class TwitterOperations():
         formatted_users = " OR ".join([f"from:{user}" for user in users_to_get_tweets]) # format for the api
         
         if 'next_token' in kwargs: #next token to retrieve older tweets if there are any
-            url = f"https://api.twitter.com/2/tweets/search/recent?query=({formatted_users})&next_token={kwargs.get('next_token')}&tweet.fields=author_id,referenced_tweets"
+            url = f"https://api.twitter.com/2/tweets/search/recent?query=({formatted_users}) -is:reply&next_token={kwargs.get('next_token')}&tweet.fields=author_id,referenced_tweets,created_at"
         else:
-            url = f"https://api.twitter.com/2/tweets/search/recent?query=({formatted_users})&tweet.fields=author_id,referenced_tweets"
+            url = f"https://api.twitter.com/2/tweets/search/recent?query=({formatted_users}) -is:reply&tweet.fields=author_id,referenced_tweets,created_at"
         payload={}
         headers = {
             'Authorization': f"Bearer {app.config['BEARER']}",
             }
         response = requests.request("GET", url, headers=headers, data=payload).json()
         #Retweets are truncated, this function resolves that - To add the expansion of short URL's for display
-        fixed_data = TwitterOperations.fix_truncated_data(response)
+        fixed_data = TwitterOperations.fix_data(response)
 
         return fixed_data
 
-    def fix_truncated_data(data):
+    def fix_data(data):
         for x in data['data']:
             # un truncate retweets which truncate within the API
             if x['text'].startswith('RT'):
