@@ -1,4 +1,0 @@
-debian
-ubuntu
-RedHat
-elonmusk

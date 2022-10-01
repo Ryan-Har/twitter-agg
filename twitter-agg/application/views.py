@@ -1,6 +1,7 @@
 from application import app
 from application.home import DataOperations, TwitterOperations, TwitterUser
-from flask import render_template
+from flask import render_template, render_template_string
+import datetime
 
 @app.route('/')
 def main():

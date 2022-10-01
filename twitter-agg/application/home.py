@@ -6,14 +6,14 @@ import json
 class DataOperations():
     def get_users():
         users = []
-        with open('application/users.txt', 'r') as f:
+        with open('application/users.ini', 'r') as f:
             for line in f.readlines():
                 users.append(line.strip())
         return users
 
     def get_tags():
         tags = []
-        with open('tags.txt', 'r') as f:
+        with open('tags.ini', 'r') as f:
             for line in f.readlines():
                 tags.append(line.strip())
         return tags
@@ -28,20 +28,20 @@ class DataOperations():
             return False
 
     def add_users(users_to_add): #must be iterable(set, list, etc. Not a string)
-        with open('users.txt', 'a') as f:
+        with open('users.ini', 'a') as f:
             for user in users_to_add:
                 if not check_duplicate(user, 'users'):
                     f.write(f"{user}\n")
 
     def add_tags(tags_to_add): #must be iterable(set, list, etc. Not a string)
-        with open('tags.txt', 'a') as f:
+        with open('tags.ini', 'a') as f:
             for tag in tags_to_add:
                 if not check_duplicate(tag, 'tags'):
                     f.write(f"{tag}\n")
 
     def del_users(users_to_del): #must be iterable(set, list, etc. Not a string)
         for user in users_to_del:
-            with open('users.txt', 'r+') as f:
+            with open('users.ini', 'r+') as f:
                 data = f.readlines()
                 f.seek(0)
                 for item in data:
@@ -51,7 +51,7 @@ class DataOperations():
 
     def del_tags(tags_to_del): #must be iterable(set, list, etc. Not a string)
         for tag in tags_to_del:
-            with open('tags.txt', 'r+') as f:
+            with open('tags.ini', 'r+') as f:
                 data = f.readlines()
                 f.seek(0)
                 for item in data:
@@ -85,11 +85,11 @@ class TwitterOperations():
             }
         response = requests.request("GET", url, headers=headers, data=payload).json()
         #Retweets are truncated, this function resolves that - To add the expansion of short URL's for display
-        fixed_data = TwitterOperations.fix_data(response)
+        fixed_data = TwitterOperations.fix_truncated_data(response)
 
         return fixed_data
 
-    def fix_data(data):
+    def fix_truncated_data(data):
         for x in data['data']:
             # un truncate retweets which truncate within the API
             if x['text'].startswith('RT'):

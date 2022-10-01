@@ -4,22 +4,28 @@
     <div class="container">
         {% for tweet in tweets %}
         <div class="row g-2">
-            <div class="col-6">
-                <div class="p-1">
-                    <div class="card bg-dark text-white">
-                        <div class="card-header">
-                            <img src="{{ tweet['profile_image'] }}" height="50" width="50" class="rounded-circle">
-                            {{ tweet['name'] }}
-                            @{{ tweet['handle'] }}
-                            {{ tweet['created_at'] }}
-                        </div>
-                        <div class="card-body">   
-                            <p>{{ tweet['text'] }}</p>
+            <div class="col-6 p-1">
+                <div class="card bg-dark text-white">
+                    <div class="card-header">
+                        <div class="row">
+                            <div class="col-1">
+                                <img src="{{ tweet['profile_image'] }}" height="45" width="45" class="rounded-circle">
+                            </div>
+                            <div class="col-5">
+                                <strong>{{ tweet['name'] }}</strong> <br>
+                                @{{ tweet['handle'] }}
+                            </div>
+                            <div class="col-6 text-end">    
+                                <span class="tweetTime">{{ tweet['created_at'] }}</span>
+                            </div>
+                            <div class="card-body">   
+                                <p>{{ tweet['text'] }}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </div>       
         {% endfor %}
     </div>
 {% endblock  %}
