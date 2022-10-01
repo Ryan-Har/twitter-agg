@@ -2,24 +2,45 @@
 
 {% block content %}
     <div class="container">
-        {% for tweet in tweets %}
+        {% for user_tweet, tag_tweet in zip(user_tweets, tag_tweets) %}
         <div class="row g-2">
             <div class="col-6 p-1">
                 <div class="card bg-dark text-white">
                     <div class="card-header">
                         <div class="row">
                             <div class="col-1">
-                                <img src="{{ tweet['profile_image'] }}" height="45" width="45" class="rounded-circle">
+                                <img src="{{ user_tweet['profile_image'] }}" height="45" width="45" class="rounded-circle">
                             </div>
                             <div class="col-5">
-                                <strong>{{ tweet['name'] }}</strong> <br>
-                                @{{ tweet['handle'] }}
+                                <strong>{{ user_tweet['name'] }}</strong> <br>
+                                @{{ user_tweet['handle'] }}
                             </div>
                             <div class="col-6 text-end">    
-                                <span class="tweetTime">{{ tweet['created_at'] }}</span>
+                                <span class="tweetTime">{{ user_tweet['created_at'] }}</span>
                             </div>
                             <div class="card-body">   
-                                <p>{{ tweet['text'] }}</p>
+                                <p>{{ user_tweet['text'] }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 p-1">
+                <div class="card bg-dark text-white">
+                    <div class="card-header">
+                        <div class="row">
+                            <div class="col-1">
+                                <img src="{{ tag_tweet['profile_image'] }}" height="45" width="45" class="rounded-circle">
+                            </div>
+                            <div class="col-5">
+                                <strong>{{ tag_tweet['name'] }}</strong> <br>
+                                @{{ tag_tweet['handle'] }}
+                            </div>
+                            <div class="col-6 text-end">    
+                                <span class="tweetTime">{{ tag_tweet['created_at'] }}</span>
+                            </div>
+                            <div class="card-body">   
+                                <p>{{ tag_tweet['text'] }}</p>
                             </div>
                         </div>
                     </div>

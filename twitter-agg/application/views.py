@@ -5,30 +5,46 @@ import datetime
 
 @app.route('/')
 def main():
-    users_info = TwitterOperations.get_users_info()
-    #add objects into list
-    users = []
-    for i in users_info:
-        users.append(TwitterUser(i['id'], i['username'], i['name'], i['profile_image_url']))
-    #convert list to a dict with the handle as the key    
-    users_by_ID = {}
-    for i in users:
-        users_by_ID[i.user_ID] = i
+    
+    def user_tweets():
+        #get 10 tweets for the users
+        monitored_user_tweets = TwitterOperations.get_tweets('user')
+        # dictionary of the monitored users handle, name, username and image
+        monitored_users_info = TwitterOperations.get_users_info(DataOperations.get_users())
+        
+        #combine tweet and user data
+        user_tweets_with_user = []
+        for tweet in monitored_user_tweets['data']:
+            tweet_dict = {}
+            tweet_dict['handle'] = monitored_users_info[tweet['author_id']].user_handle
+            tweet_dict['name'] = monitored_users_info[tweet['author_id']].friendly_name
+            tweet_dict['profile_image'] = monitored_users_info[tweet['author_id']].profile_picture
+            tweet_dict['text'] = tweet['text']
+            tweet_dict['created_at'] = tweet['created_at']
+            user_tweets_with_user.append(tweet_dict)
+        
+        return user_tweets_with_user
 
-    #get 10 tweets for the users
-    tweets = TwitterOperations.get_tweets([user.user_handle for user in users])
+    def tag_tweets():
+        #get 10 tweets for the tags
+        monitored_tag_tweets = TwitterOperations.get_tweets('tag')
 
-    #combine tweet and user data
-    tweets_with_user = []
-    for tweet in tweets['data']:
-        tweet_dict = {}
-        tweet_dict['handle'] = users_by_ID[tweet['author_id']].user_handle
-        tweet_dict['name'] = users_by_ID[tweet['author_id']].friendly_name
-        tweet_dict['profile_image'] = users_by_ID[tweet['author_id']].profile_picture
-        tweet_dict['text'] = tweet['text']
-        tweet_dict['created_at'] = tweet['created_at']
-        tweets_with_user.append(tweet_dict)
-    return render_template('home.html', tweets=tweets_with_user)
+        tag_tweets_with_user = []
+        for tweet in monitored_tag_tweets['data']:
+            tweet_dict = {}
+            user = TwitterOperations.get_single_user_info_by_id(tweet['author_id'])
+            tweet_dict['handle'] = user['username']
+            tweet_dict['name'] = user['name']
+            tweet_dict['profile_image'] = user['profile_image_url']
+            tweet_dict['text'] = tweet['text']
+            tweet_dict['created_at'] = tweet['created_at']
+            tag_tweets_with_user.append(tweet_dict)
+        
+        return tag_tweets_with_user      
+
+    return render_template('home.html', user_tweets=user_tweets(), tag_tweets=tag_tweets(), zip=zip)
+
+
     
 
 @app.route('/api/')

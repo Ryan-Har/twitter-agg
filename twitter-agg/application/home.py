@@ -1,5 +1,4 @@
 from application import app
-import tweepy
 import requests
 import json
 
@@ -13,13 +12,13 @@ class DataOperations():
 
     def get_tags():
         tags = []
-        with open('tags.ini', 'r') as f:
+        with open('application/tags.ini', 'r') as f:
             for line in f.readlines():
                 tags.append(line.strip())
         return tags
 
     def check_duplicate(data, type):
-        if type not in ('users', 'tags'):
+        if type not in ('application/users', 'tags'):
             raise Exception("type not 'users' or 'tags'")
         to_check = eval(f"get_{type}()")
         if data in to_check:
@@ -28,20 +27,20 @@ class DataOperations():
             return False
 
     def add_users(users_to_add): #must be iterable(set, list, etc. Not a string)
-        with open('users.ini', 'a') as f:
+        with open('application/users.ini', 'a') as f:
             for user in users_to_add:
                 if not check_duplicate(user, 'users'):
                     f.write(f"{user}\n")
 
     def add_tags(tags_to_add): #must be iterable(set, list, etc. Not a string)
-        with open('tags.ini', 'a') as f:
+        with open('application/tags.ini', 'a') as f:
             for tag in tags_to_add:
                 if not check_duplicate(tag, 'tags'):
                     f.write(f"{tag}\n")
 
     def del_users(users_to_del): #must be iterable(set, list, etc. Not a string)
         for user in users_to_del:
-            with open('users.ini', 'r+') as f:
+            with open('application/users.ini', 'r+') as f:
                 data = f.readlines()
                 f.seek(0)
                 for item in data:
@@ -51,7 +50,7 @@ class DataOperations():
 
     def del_tags(tags_to_del): #must be iterable(set, list, etc. Not a string)
         for tag in tags_to_del:
-            with open('tags.ini', 'r+') as f:
+            with open('application/tags.ini', 'r+') as f:
                 data = f.readlines()
                 f.seek(0)
                 for item in data:
@@ -60,10 +59,9 @@ class DataOperations():
                     f.truncate()
 
 class TwitterOperations():
-    #get user ID, handle, name and profile image
-    def get_users_info(): 
-        url = f"https://api.twitter.com/2/users/by?usernames={','.join(DataOperations.get_users())}&user.fields=profile_image_url"
-        
+
+    def get_single_user_info_by_id(user_id):
+        url = f"https://api.twitter.com/2/users/{user_id}?user.fields=profile_image_url"
         payload={}
         headers = {
             'Authorization': f"Bearer {app.config['BEARER']}",
@@ -71,24 +69,59 @@ class TwitterOperations():
         response = requests.request("GET", url, headers=headers, data=payload).json()
         return response['data']
 
-        #get tweets for specific user
-    def get_tweets(users_to_get_tweets, **kwargs):
-        formatted_users = " OR ".join([f"from:{user}" for user in users_to_get_tweets]) # format for the api
+    #get user ID, handle, name and profile image
+    def get_users_info(users): 
+        url = f"https://api.twitter.com/2/users/by?usernames={','.join(users)}&user.fields=profile_image_url"
         
-        if 'next_token' in kwargs: #next token to retrieve older tweets if there are any
-            url = f"https://api.twitter.com/2/tweets/search/recent?query=({formatted_users}) -is:reply&next_token={kwargs.get('next_token')}&tweet.fields=author_id,referenced_tweets,created_at"
-        else:
-            url = f"https://api.twitter.com/2/tweets/search/recent?query=({formatted_users}) -is:reply&tweet.fields=author_id,referenced_tweets,created_at"
         payload={}
         headers = {
             'Authorization': f"Bearer {app.config['BEARER']}",
             }
         response = requests.request("GET", url, headers=headers, data=payload).json()
-        #Retweets are truncated, this function resolves that - To add the expansion of short URL's for display
-        fixed_data = TwitterOperations.fix_truncated_data(response)
+        #add objects into list
+        twitter_users = []
+        for i in response['data']:
+            twitter_users.append(TwitterUser(i['id'], i['username'], i['name'], i['profile_image_url']))
 
-        return fixed_data
+        #convert list to a dict with the ID as the key    
+        twitter_users_by_ID = {}
+        for i in twitter_users:
+            twitter_users_by_ID[i.user_ID] = i
+        
+        return twitter_users_by_ID
 
+        #get tweets for specific user
+    def get_tweets(get_type, **kwargs):#get_type being tag or user lookup
+        if get_type == 'user':
+            formatted_users = " OR ".join([f"from:{user}" for user in DataOperations.get_users()]) # format for the api
+            if 'next_token' in kwargs: #next token to retrieve older tweets if there are any
+                url = f"https://api.twitter.com/2/tweets/search/recent?query=({formatted_users}) -is:reply&next_token={kwargs.get('next_token')}&tweet.fields=author_id,referenced_tweets,created_at"
+            else:
+                url = f"https://api.twitter.com/2/tweets/search/recent?query=({formatted_users}) -is:reply&tweet.fields=author_id,referenced_tweets,created_at"
+            payload={}
+            headers = {
+                'Authorization': f"Bearer {app.config['BEARER']}",
+                }
+            response = requests.request("GET", url, headers=headers, data=payload).json()
+            #Retweets are truncated, this function resolves that - To add the expansion of short URL's for display
+            fixed_data = TwitterOperations.fix_truncated_data(response)
+            return fixed_data
+
+        if get_type == 'tag':
+            formatted_tags = " OR ".join([f"%23{tag}" for tag in DataOperations.get_tags()])#%23 is the # symbol
+            if 'next_token' in kwargs: #next token to retrieve older tweets if there are any
+                url = f"https://api.twitter.com/2/tweets/search/recent?query=({formatted_tags}) -is:reply&next_token={kwargs.get('next_token')}&tweet.fields=author_id,referenced_tweets,created_at"
+            else:
+                url = f"https://api.twitter.com/2/tweets/search/recent?query=({formatted_tags}) -is:reply&tweet.fields=author_id,referenced_tweets,created_at"
+            payload={}
+            headers = {
+                'Authorization': f"Bearer {app.config['BEARER']}",
+                }
+            response = requests.request("GET", url, headers=headers, data=payload).json()
+            #Retweets are truncated, this function resolves that - To add the expansion of short URL's for display
+            fixed_data = TwitterOperations.fix_truncated_data(response)
+            return fixed_data
+        
     def fix_truncated_data(data):
         for x in data['data']:
             # un truncate retweets which truncate within the API
@@ -113,6 +146,10 @@ class TwitterOperations():
         response = requests.request("GET", url, headers=headers, data=payload).json()
 
         return response['data']['text']
+
+    def get_tags():
+        pass
+
 
 class TwitterUser(object):
 
