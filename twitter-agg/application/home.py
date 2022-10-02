@@ -150,9 +150,6 @@ class TwitterOperations():
 
         return response['data']['text']
 
-    def get_tags():
-        pass
-
 
 class TwitterUser(object):
 
