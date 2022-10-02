@@ -1,6 +1,8 @@
 from application import app
 import requests
 import json
+import asyncio
+import aiohttp
 
 class DataOperations():
     def get_users():
@@ -60,24 +62,28 @@ class DataOperations():
 
 class TwitterOperations():
 
-    def get_single_user_info_by_id(user_id):
-        url = f"https://api.twitter.com/2/users/{user_id}?user.fields=profile_image_url"
+    async def get_twitter_api_request(url):
         payload={}
         headers = {
             'Authorization': f"Bearer {app.config['BEARER']}",
             }
-        response = requests.request("GET", url, headers=headers, data=payload).json()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers, data=payload) as resp:
+                return await resp.json()
+        
+
+    async def get_single_user_info_by_id(user_id):
+        url = f"https://api.twitter.com/2/users/{user_id}?user.fields=profile_image_url"
+        response_request = asyncio.create_task(TwitterOperations.get_twitter_api_request(url))
+        response = await response_request
         return response['data']
 
     #get user ID, handle, name and profile image
-    def get_users_info(users): 
+    async def get_users_info(users): 
         url = f"https://api.twitter.com/2/users/by?usernames={','.join(users)}&user.fields=profile_image_url"
         
-        payload={}
-        headers = {
-            'Authorization': f"Bearer {app.config['BEARER']}",
-            }
-        response = requests.request("GET", url, headers=headers, data=payload).json()
+        response_request = asyncio.create_task(TwitterOperations.get_twitter_api_request(url))
+        response = await response_request
         #add objects into list
         twitter_users = []
         for i in response['data']:
@@ -91,21 +97,21 @@ class TwitterOperations():
         return twitter_users_by_ID
 
         #get tweets for specific user
-    def get_tweets(get_type, **kwargs):#get_type being tag or user lookup
+    async def get_tweets(get_type, **kwargs):#get_type being tag or user lookup
         if get_type == 'user':
             formatted_users = " OR ".join([f"from:{user}" for user in DataOperations.get_users()]) # format for the api
             if 'next_token' in kwargs: #next token to retrieve older tweets if there are any
                 url = f"https://api.twitter.com/2/tweets/search/recent?query=({formatted_users}) -is:reply&next_token={kwargs.get('next_token')}&tweet.fields=author_id,referenced_tweets,created_at"
             else:
                 url = f"https://api.twitter.com/2/tweets/search/recent?query=({formatted_users}) -is:reply&tweet.fields=author_id,referenced_tweets,created_at"
-            payload={}
-            headers = {
-                'Authorization': f"Bearer {app.config['BEARER']}",
-                }
-            response = requests.request("GET", url, headers=headers, data=payload).json()
+  
+            response_request = asyncio.create_task(TwitterOperations.get_twitter_api_request(url))
+            response = await response_request
+            
             #Retweets are truncated, this function resolves that - To add the expansion of short URL's for display
             fixed_data = TwitterOperations.fix_truncated_data(response)
-            return fixed_data
+            
+            return await fixed_data
 
         if get_type == 'tag':
             formatted_tags = " OR ".join([f"%23{tag}" for tag in DataOperations.get_tags()])#%23 is the # symbol
@@ -113,21 +119,21 @@ class TwitterOperations():
                 url = f"https://api.twitter.com/2/tweets/search/recent?query=({formatted_tags}) -is:reply&next_token={kwargs.get('next_token')}&tweet.fields=author_id,referenced_tweets,created_at"
             else:
                 url = f"https://api.twitter.com/2/tweets/search/recent?query=({formatted_tags}) -is:reply&tweet.fields=author_id,referenced_tweets,created_at"
-            payload={}
-            headers = {
-                'Authorization': f"Bearer {app.config['BEARER']}",
-                }
-            response = requests.request("GET", url, headers=headers, data=payload).json()
+
+            response_request = asyncio.create_task(TwitterOperations.get_twitter_api_request(url))
+            response = await response_request
             #Retweets are truncated, this function resolves that - To add the expansion of short URL's for display
-            fixed_data = TwitterOperations.fix_truncated_data(response)
+            fixed_data_task = asyncio.create_task(TwitterOperations.fix_truncated_data(response))
+            fixed_data = await fixed_data_task
             return fixed_data
         
-    def fix_truncated_data(data):
+    async def fix_truncated_data(data):
         for x in data['data']:
             # un truncate retweets which truncate within the API
             if x['text'].startswith('RT'):
                 try:
-                    full_text = TwitterOperations.get_single_tweet_text((x['referenced_tweets'][0]['id']))
+                    full_text_task = asyncio.create_task(TwitterOperations.get_single_tweet_text((x['referenced_tweets'][0]['id'])))
+                    full_text = await full_text_task
                     x['text'] = f"RT: {full_text}"
                 except:
                     print("text started with 'RT' but wasn't a retweet") 
@@ -137,13 +143,10 @@ class TwitterOperations():
         return data
 
     #returns only the text for a single tweet, by ID
-    def get_single_tweet_text(id):
+    async def get_single_tweet_text(id):
         url = f"https://api.twitter.com/2/tweets/{id}"
-        payload={}
-        headers = {
-            'Authorization': f"Bearer {app.config['BEARER']}",
-            }
-        response = requests.request("GET", url, headers=headers, data=payload).json()
+        response_request = asyncio.create_task(TwitterOperations.get_twitter_api_request(url))
+        response = await response_request
 
         return response['data']['text']
 
