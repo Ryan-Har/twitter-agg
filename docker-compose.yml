@@ -8,12 +8,23 @@ services:
   twitteragg:
     image: pandects/twitter-agg
     container_name: twitter-agg
-    build: .
-    #environment:
-        #restart: always
+    build: ./twitter-agg
+    environment:
+        restart: always
     networks:
       - twitter-agg
     volumes:
       - ./twitter-agg:/usr/app
+    depends_on:
+      - reverseproxy
+    
+  reverseproxy:
+    image: pandects/twitter-agg-nginx
+    container_name: twitter-agg-nginx
+    build: ./nginx
+    environment:
+        restart: always
+    networks:
+      - twitter-agg
     ports:
-      - "5000:5000"
+      - "80:80"
