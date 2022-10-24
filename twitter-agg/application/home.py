@@ -1,5 +1,4 @@
 from application import app
-import requests
 import json
 import asyncio
 import aiohttp
@@ -60,6 +59,68 @@ class DataOperations():
                         f.write(item)
                     f.truncate()
 
+    async def user_tweets(*args):
+        if args:
+            calls = [
+            asyncio.ensure_future(TwitterOperations.get_tweets('user', next_token=args[0])),
+            asyncio.ensure_future(TwitterOperations.get_users_info(DataOperations.get_users()))
+            ]
+        else:
+            calls = [
+                asyncio.ensure_future(TwitterOperations.get_tweets('user')),
+                asyncio.ensure_future(TwitterOperations.get_users_info(DataOperations.get_users()))
+            ]
+
+        monitored_user_tweets, monitored_users_info = await asyncio.gather(*calls)
+            
+        #combine tweet and user data
+        user_tweets_with_user = []
+        for tweet in monitored_user_tweets['data']:
+            tweet_dict = {}
+            tweet_dict['handle'] = monitored_users_info[tweet['author_id']].user_handle
+            tweet_dict['name'] = monitored_users_info[tweet['author_id']].friendly_name
+            tweet_dict['profile_image'] = monitored_users_info[tweet['author_id']].profile_picture
+            tweet_dict['text'] = tweet['text']
+            tweet_dict['created_at'] = tweet['created_at']
+            #add the next token for the search for each, if it doesn't exist then there are no more results
+            try:
+                tweet_dict['next_token'] = monitored_user_tweets['meta']['next_token']
+            except:
+                print('no next token, last in the list')
+            user_tweets_with_user.append(tweet_dict)
+        
+        return user_tweets_with_user
+
+    async def tag_tweets(*args):
+        if args:
+            monitored_tag_tweets_task =  asyncio.create_task(TwitterOperations.get_tweets('tag', next_token=args[0]))
+        else:
+            monitored_tag_tweets_task =  asyncio.create_task(TwitterOperations.get_tweets('tag'))
+        
+        monitored_tag_tweets = await monitored_tag_tweets_task
+        
+        tag_tweet_users_task = []
+        for tweet in monitored_tag_tweets['data']:
+            tag_tweet_users_task.append(asyncio.create_task(TwitterOperations.get_single_user_info_by_id(tweet['author_id'])))
+        tag_tweet_users = await asyncio.gather(*tag_tweet_users_task)
+
+        #combine tweet and user data
+        tag_tweets_with_user = []    
+        for tweet, user in zip(monitored_tag_tweets['data'], tag_tweet_users):
+            tweet_dict = {}
+            tweet_dict['handle'] = user['username']
+            tweet_dict['name'] = user['name']
+            tweet_dict['profile_image'] = user['profile_image_url']
+            tweet_dict['text'] = tweet['text']
+            tweet_dict['created_at'] = tweet['created_at']
+            tag_tweets_with_user.append(tweet_dict)
+            #add the next token for the search for each, if it doesn't exist then there are no more results
+            try:
+                tweet_dict['next_token'] = monitored_tag_tweets['meta']['next_token']
+            except:
+                print('no next token, last in the list')
+        return tag_tweets_with_user
+
 class TwitterOperations():
 
     async def get_twitter_api_request(url):
@@ -81,9 +142,10 @@ class TwitterOperations():
     #get user ID, handle, name and profile image
     async def get_users_info(users): 
         url = f"https://api.twitter.com/2/users/by?usernames={','.join(users)}&user.fields=profile_image_url"
-        
+
         response_request = asyncio.create_task(TwitterOperations.get_twitter_api_request(url))
         response = await response_request
+        
         #add objects into list
         twitter_users = []
         for i in response['data']:

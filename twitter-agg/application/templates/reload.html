@@ -1,6 +1,3 @@
-{% extends 'base.html' %}
-
-{% block content %}
 <div class="container-md">
     {% for index, (user_tweet, tag_tweet) in enumerate(zip(user_tweets, tag_tweets)) %}
         {% if index == 9 %}
@@ -53,4 +50,5 @@
         </div>       
     {% endfor %}
 </div>
-{% endblock  %}
+
+<script src="{{url_for('static', filename='times_to_local.js')}}"></script>
