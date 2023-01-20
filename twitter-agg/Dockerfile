@@ -2,7 +2,7 @@ FROM python:3.9
 RUN apt-get update && apt-get upgrade -y
 RUN pip install --upgrade pip
 WORKDIR /usr/app
-COPY requirements.txt ./
+COPY . ./
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 ENV QUART_APP=application:app

@@ -15,16 +15,3 @@ services:
       - twitter-agg
     volumes:
       - ./twitter-agg:/usr/app
-    depends_on:
-      - reverseproxy
-    
-  reverseproxy:
-    image: pandects/twitter-agg-nginx
-    container_name: twitter-agg-nginx
-    build: ./nginx
-    environment:
-        restart: always
-    networks:
-      - twitter-agg
-    ports:
-      - "80:80"
