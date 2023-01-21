@@ -4,8 +4,8 @@ pipeline {
     stages {
         stage('build') {
             steps {
-                withCredentials([file(credentialsId: '0608dc10-a11e-44dd-925c-63f4b58dba46', variable: 'BEARER')]) {
-                sh('#!/bin/sh -e\n' + 'echo $BEARER > twitter.env')
+                withCredentials([string(credentialsId: 'ac58a311-104d-4d01-b816-64a16093ccb2', variable: 'BEARER')]) {
+                sh 'echo $BEARER > twitter.env'
                 sh 'docker compose build'
                 }
             }
