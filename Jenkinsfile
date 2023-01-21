@@ -12,8 +12,9 @@ pipeline {
         }
         stage('test') {
             steps{
-                sh 'docker compose up'
+                sh 'docker compose up -d'
                 sh 'curl 127.0.0.1:5000'
+                sg 'docker compose down'
             }
         }
     }
