@@ -7,6 +7,7 @@ pipeline {
                 withCredentials([file(credentialsId: '0608dc10-a11e-44dd-925c-63f4b58dba46', variable: 'BEARER')]) {
                 sh('#!/bin/sh -e\n' + 'echo $BEARER > twitter.env')
                 sh 'docker compose build'
+                }
             }
         }
         stage('test') {
@@ -15,5 +16,4 @@ pipeline {
             }
         }
     }
-}
 }
