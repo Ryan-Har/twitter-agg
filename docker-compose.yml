@@ -14,7 +14,7 @@ services:
         restart: always
     networks:
       - twitter-agg
-    volumes:
-      - ./twitter-agg:/usr/app
+    #volumes:
+    #  - ./twitter-agg:/usr/app
     ports:
       - 5000:5000
