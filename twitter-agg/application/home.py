@@ -2,6 +2,7 @@ from application import app
 import json
 import asyncio
 import aiohttp
+import os
 
 class DataOperations():
     def get_users():
@@ -126,7 +127,7 @@ class TwitterOperations():
     async def get_twitter_api_request(url):
         payload={}
         headers = {
-            'Authorization': f"Bearer {app.config['BEARER']}",
+            'Authorization': f"Bearer {os.environ['BEARER']}",
             }
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers, data=payload) as resp:

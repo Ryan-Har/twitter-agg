@@ -8,6 +8,7 @@ services:
   twitteragg:
     image: pandects/twitter-agg
     container_name: twitter-agg
+    env_file: twitter.env
     build: ./twitter-agg
     environment:
         restart: always
@@ -15,3 +16,5 @@ services:
       - twitter-agg
     volumes:
       - ./twitter-agg:/usr/app
+    ports:
+      - 5000:5000
