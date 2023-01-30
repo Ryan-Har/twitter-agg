@@ -1,4 +1,5 @@
 /* Requires the Docker Pipeline plugin */
+def app
 pipeline {
     agent any
     stages {
@@ -24,8 +25,8 @@ pipeline {
         }
         stage('push image'){
             steps{
-                docker.withRegistry([url: '677374482341.dkr.ecr.eu-west-2.amazonaws.com/twitter-agg', credentialsId: 'ecr:a9f0514f-824e-4e29-846f-de87a54374bb']) {
-                    sh 'docker push 677374482341.dkr.ecr.eu-west-2.amazonaws.com/twitter-agg:latest'
+                withDockerRegistry([url: '677374482341.dkr.ecr.eu-west-2.amazonaws.com/twitter-agg', credentialsId: 'ecr:eu-west-2:a9f0514f-824e-4e29-846f-de87a54374bb']) {
+                    app.push()
                 }
             }
         }    
