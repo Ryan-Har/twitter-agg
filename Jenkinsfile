@@ -27,7 +27,7 @@ pipeline {
         }
         stage('retag image'){
             steps{
-                sh 'docker tag ${IMAGE}:latest ${IMAGE}:${BUILD_NUMBER}'
+                sh "docker tag ${IMAGE}:latest ${IMAGE}:${BUILD_NUMBER}"
             }
         }
         stage('push image'){
