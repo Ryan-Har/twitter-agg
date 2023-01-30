@@ -8,7 +8,9 @@ pipeline {
         stage('build') {
             steps {
                 withCredentials([string(credentialsId: 'ac58a311-104d-4d01-b816-64a16093ccb2', variable: 'BEARER')]) {
-                sh "docker build -t ${image}:latest --build-arg BEARER=${BEARER} -f twitter-agg/Dockerfile ."
+                    dir('twitter-agg'){
+                        sh "docker build -t ${image}:latest --build-arg BEARER=${BEARER} ."
+                    }
                 }
             }
         }
