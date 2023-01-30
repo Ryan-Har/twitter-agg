@@ -24,7 +24,7 @@ pipeline {
         }
         stage('push image'){
             steps{
-                withDockerRegistry([url: '677374482341.dkr.ecr.eu-west-2.amazonaws.com/twitter-agg',credentialsId: 'a9f0514f-824e-4e29-846f-de87a54374bb']) {
+                withDockerRegistry([url: '677374482341.dkr.ecr.eu-west-2.amazonaws.com/twitter-agg', credentialsId: 'a9f0514f-824e-4e29-846f-de87a54374bb']) {
                     sh 'docker push 677374482341.dkr.ecr.eu-west-2.amazonaws.com/twitter-agg:latest'
                 }
             }
