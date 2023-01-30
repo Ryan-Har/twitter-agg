@@ -6,7 +6,7 @@ networks:
 
 services:
   twitteragg:
-    image: pandects/twitter-agg
+    image: 677374482341.dkr.ecr.eu-west-2.amazonaws.com/twitter-agg:latest
     container_name: twitter-agg
     env_file: twitter.env
     build: ./twitter-agg
