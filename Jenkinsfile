@@ -8,19 +8,19 @@ pipeline {
         stage('build') {
             steps {
                 withCredentials([string(credentialsId: 'ac58a311-104d-4d01-b816-64a16093ccb2', variable: 'BEARER')]) {
-                sh "docker build -t ${image}:latest --build-arg BEARER=${BEARER} -f twitter-agg/Dockerfile"
+                sh "docker build -t ${image}:latest --build-arg BEARER=${BEARER} -f twitter-agg/Dockerfile ."
                 }
             }
         }
         stage('test') {
             steps{
-                sh 'docker compose up -d'
+                sh "docker run -d -p 5000:5000 ${IMAGE}:latest"
                 sleep(5)
                 sh 'curl -L 127.0.0.1:5000'
             }
             post {
                 always {
-                    sh 'docker compose down'
+                    sh 'docker ps -q | xargs docker stop'
                 }
             }
         }
