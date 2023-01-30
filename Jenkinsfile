@@ -13,6 +13,7 @@ pipeline {
         stage('test') {
             steps{
                 sh 'docker compose up -d'
+                sleep(5)
                 sh 'curl -L 127.0.0.1:5000'
             }
             post {
