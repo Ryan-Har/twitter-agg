@@ -1,7 +1,9 @@
 /* Requires the Docker Pipeline plugin */
-def app
 pipeline {
     agent any
+    environment {
+        IMAGE = '677374482341.dkr.ecr.eu-west-2.amazonaws.com/twitter-agg'
+    }
     stages {
         stage('build') {
             steps {
@@ -23,10 +25,19 @@ pipeline {
                 }
             }
         }
+        stage('retag image'){
+            steps{
+                sh 'docker tag ${IMAGE}:latest ${IMAGE}:${BUILD_NUMBER}'
+            }
+        }
         stage('push image'){
             steps{
-                withDockerRegistry([url: '677374482341.dkr.ecr.eu-west-2.amazonaws.com/twitter-agg', credentialsId: 'ecr:eu-west-2:a9f0514f-824e-4e29-846f-de87a54374bb']) {
-                    app.push()
+                script{
+                    withDockerRegistry([url: 'https://${IMAGE}', credentialsId: 'ecr:eu-west-2:a9f0514f-824e-4e29-846f-de87a54374bb']) {
+                        container = docker.image('677374482341.dkr.ecr.eu-west-2.amazonaws.com/twitter-agg')
+                        container.push('latest')
+                        container.push("${BUILD_NUMBER}")
+                    }
                 }
             }
         }    
